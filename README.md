@@ -42,7 +42,11 @@ https://goerli.etherscan.io/address/0x189a6d39559f9272771724e08d28375f7c18a1a9#c
 - Aderlus PL (ADERLUSPL)[Aderlus_PL][0x7DB81923F09933A9b1506271F523B1Ae85A7AdBe]  
 https://goerli.etherscan.io/address/0x9a4f724de858ad4376f9b183d0d226c3ba88366e#code  
 
+- Aderlo SHOP The Dubai Mall (DUBMALL)[Aderlo_SHOP_The_Dubai_Mall][0x404Dc5303CE70303F0B3095F0257c8fDfE5b10eA]  
+https://goerli.etherscan.io/address/0x683891661Dd8a7cB94a3Eb884720b5F6bBE93fC6#code  
 
+- Aderlo SHOP Dubai Mall Consortium (SHOP Dubai)[Aderlo_SHOP_Dubai_Mall_Consortium][0x37B2f100409d2fF666aC4b18CCc2515495F9Db31]  
+https://goerli.etherscan.io/address/0x1B39A0345F0b01A27606BA148f24f13Cdc48FE67#code  
 
 - AderloMarket  
 https://goerli.etherscan.io/address/0xa989574277a0cba9d1b3d406763b91d47ee84e39#code  
