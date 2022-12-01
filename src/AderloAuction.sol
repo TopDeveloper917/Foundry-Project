@@ -103,31 +103,36 @@ contract AderloAuction is Auth, ERC721Holder {
         emit AuctionCreated(newAuction);
     }
     
-    function finalizeAuction(uint256 _auction_id) public {
-        require(_auction_id <= currentID && auctions[_auction_id].active, "Invalid Auction Id");
-        Auction memory myAuction = auctions[_auction_id];
-        uint256 bidsLength = auctionBids[_auction_id].length;
-        require(msg.sender == myAuction.owner, "only auction owner can finalize");
+    function finalizeAuction(uint256 auctionId) public {
+        Auction storage myAuction = auctions[auctionId];
+        require(auctionId <= currentID && myAuction.active, "Invalid Auction Id");
+        uint256 bidsLength = auctionBids[auctionId].length;
+        require(msg.sender == myAuction.owner, "Only auction owner can finalize");
+        uint256 _tokenId = myAuction.token_id;
         // if there are no bids cancel
         if (bidsLength == 0) {
-            ISTDNFT(myAuction.collection).safeTransferFrom(address(this), myAuction.owner, myAuction.token_id);
-            auctions[_auction_id].active = false;
-            emit AuctionCanceled(_auction_id);
+            ISTDNFT(myAuction.collection).safeTransferFrom(address(this), myAuction.owner, _tokenId);
+            myAuction.active = false;
+            myAuction = myAuction;
+            emit AuctionCanceled(auctionId);
         } else {
             // the money goes to the auction owner
-            Bid memory lastBid = auctionBids[_auction_id][bidsLength - 1];
+            Bid memory lastBid = auctionBids[auctionId][bidsLength - 1];
+            
             uint256 nftRoyalty = getRoyalty(myAuction.collection);
             address collection_owner = getCollectionOwner(myAuction.collection);
-            uint256 nftRoyalties = getRoyalties(auctions[_auction_id].collection, auctions[_auction_id].token_id);
-            address itemCreator = getNFTCreator(auctions[_auction_id].collection, auctions[_auction_id].token_id);
+            uint256 nftRoyalties = getRoyalties(myAuction.collection, _tokenId);
+            address itemCreator = getNFTCreator(myAuction.collection, _tokenId);
 
             uint256 feeAmount = lastBid.bidPrice.mul(swapFee).div(PERCENTS_DIVIDER);
             uint256 royaltyAmount = lastBid.bidPrice.mul(nftRoyalty).div(PERCENTS_DIVIDER);
             uint256 royaltiesAmount = lastBid.bidPrice.mul(nftRoyalties).div(PERCENTS_DIVIDER);
             uint256 sellerAmount = lastBid.bidPrice.sub(feeAmount).sub(royaltyAmount).sub(royaltiesAmount);
-            uint256 referralAmount = 0;
+            
             if (referrals[msg.sender].referred) {
-                referralAmount = totalAmount.mul(referral_fee).div(PERCENTS_DIVIDER);
+                uint256 referralAmount = lastBid.bidPrice.mul(referral_fee).div(PERCENTS_DIVIDER);
+                (bool rs, ) = payable(referrals[msg.sender].referred_by).call{value: referralAmount}("");
+                require(rs, "Failed to send referral fee to referral user");
                 sellerAmount = sellerAmount.sub(referralAmount);
             }
             if(swapFee > 0) {
@@ -144,13 +149,8 @@ contract AderloAuction is Auth, ERC721Holder {
             }
             (bool os, ) = payable(myAuction.owner).call{value: sellerAmount}("");
             require(os, "Failed to send to item owner");
-            if (referralAmount > 0) {
-                (bool rs, ) = payable(referrals[msg.sender].referred_by).call{value: referralAmount}("");
-                require(rs, "Failed to send referral fee to referral user");
-            }
-
-            ISTDNFT(myAuction.collection).safeTransferFrom(address(this), lastBid.from, myAuction.token_id);
-            auctions[_auction_id].active = false;
+            ISTDNFT(myAuction.collection).safeTransferFrom(address(this), lastBid.from, _tokenId);
+            myAuction.active = false;
             emit AuctionFinalized(lastBid, myAuction);
         }
     }
