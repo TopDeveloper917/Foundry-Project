@@ -92,21 +92,21 @@ contract AderloMarket is Auth, ERC721Holder {
     }
 
     function buy(uint256 _id, address _ref_address) external payable {
-        require(_id <= currentID && pairs[_id].bValid, "Invalid Pair Id");
-        require(pairs[_id].owner != msg.sender, "Owner can not buy");
+        Pair storage pair = pairs[_id];
+        require(_id <= currentID && pair.bValid, "Invalid Pair Id");
+        require(pair.owner != msg.sender, "Owner can not buy");
         if (referrals[msg.sender].referred == false && _ref_address != msg.sender && _ref_address != address(0)) {
             referrals[msg.sender].referred_by = _ref_address;
             referrals[msg.sender].referred = true;
         }
-
-        Pair memory pair = pairs[_id];
+        
         uint256 totalAmount = pair.price;
         require(msg.value >= totalAmount, "insufficient balance");
 
-        uint256 nftRoyalty = getRoyalty(pairs[_id].collection);
-        address collection_owner = getCollectionOwner(pairs[_id].collection);
-        uint256 nftRoyalties = getRoyalties(pairs[_id].collection, pairs[_id].token_id);
-        address itemCreator = getNFTCreator(pairs[_id].collection, pairs[_id].token_id);
+        uint256 nftRoyalty = getRoyalty(pair.collection);
+        address collection_owner = getCollectionOwner(pair.collection);
+        uint256 nftRoyalties = getRoyalties(pair.collection, pair.token_id);
+        address itemCreator = getNFTCreator(pair.collection, pair.token_id);
         
         uint256 feeAmount = totalAmount.mul(swapFee).div(PERCENTS_DIVIDER);
         uint256 royaltyAmount = totalAmount.mul(nftRoyalty).div(PERCENTS_DIVIDER);
@@ -136,8 +136,8 @@ contract AderloMarket is Auth, ERC721Holder {
             require(rs, "Failed to send referral fee to referral user");
         }
         // transfer NFT token to buyer
-        ISTDNFT(pairs[_id].collection).safeTransferFrom(address(this), msg.sender, pair.token_id);
-        pairs[_id].bValid = false;
+        ISTDNFT(pair.collection).safeTransferFrom(address(this), msg.sender, pair.token_id);
+        pair.bValid = false;
 
         emit Swapped(msg.sender, pair);
     }
